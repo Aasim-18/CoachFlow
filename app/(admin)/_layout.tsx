@@ -13,7 +13,7 @@ export default function AdminLayout() {
         }}
       >
         <Stack.Screen 
-          name="index" 
+          name="dashboard" 
           options={{ title: 'Admin Dashboard' }} 
         />
       </Stack>

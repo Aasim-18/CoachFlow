@@ -1,6 +1,7 @@
 import { Stack, Tabs } from 'expo-router';
 import { useEffect } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
 
 
 SplashScreen.preventAutoHideAsync();
@@ -34,12 +35,15 @@ export default function RootLayout() {
         animation: 'slide_from_right',
       }}
     >
-       
+    
+
        <Tabs.Screen name="(auth)" options={{ headerShown: false }} />
        <Tabs.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="(teachers)" options={{ headerShown: false }} />
       <Stack.Screen name="(admin)" options={{ headerShown: false }} />
+      
     </Stack>
+    
   );
 }

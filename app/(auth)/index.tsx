@@ -1,34 +1,81 @@
 import React, { useState } from 'react';
 import { 
   StyleSheet, Text, View, TextInput, TouchableOpacity, 
-  KeyboardAvoidingView, Platform, ScrollView, Alert 
+  KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
+import axios from 'axios';
 
 export default function SignupScreen() {
+  const router = useRouter();
+  
+  // Form State
   const [selectedRole, setSelectedRole] = useState('Student');
   const [fullName, setFullName] = useState('');
-  const [rollNumber, setRollNumber] = useState('');
-  const [Mobile, setMobile] = useState('');
+  const [EnrollmentNumber, setEnrollmentNumber] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
   
-  const router = useRouter();
+  // Loading State
+  const [isLoading, setIsLoading] = useState(false);
+  
   const roles = ['Student', 'admin', 'Teacher'];
 
-
-  const handleContinue = () => {
-    if (!fullName || !Mobile) {
+  const handleSignup = async () => {
+    // 1. Validation
+    if (!fullName || !phone || !EnrollmentNumber || !email || !password) {
       Alert.alert('Error', 'Please fill in all required fields.');
       return;
     }
 
-    if (selectedRole === 'Teacher') {
+    // 2. Start Loading
+    setIsLoading(true);
+
+    // Debug Log (Check your terminal)
+    console.log("Sending Data:", { 
+      fullName, EnrollmentNumber, password, phone, email, role: selectedRole 
+    });
+
+    try {
+      const response = await axios.post('https://vlx-server.onrender.com/api/v1/users/register', {
+        fullName,
+        EnrollmentNumber,
+        password,
+        phone,
+        email,
+        role: selectedRole,
+      });
+
+      // 3. Success Logic (Only runs if axios is successful)
+      if (response.status === 201 || response.status === 200) {
+        Alert.alert("Success", "Account created successfully!", [
+          {
+            text: "OK", 
+            onPress: () => {
+              // Redirect based on role
+              if (selectedRole === 'Teacher') {
+                router.push('/(teachers)/attendance'); 
+              } else if (selectedRole === 'admin') {
+                router.push('/(admin)/dashboard'); 
+              } else {
+                router.push('/(auth)/login');
+              }
+            }
+          }
+        ]);
+      }
+
+    } catch (error: any) {
+      console.error('Signup Error:', error);
       
-      router.push('/(teachers)/attendence'); 
-    } else {
+      const errorMessage = error.response?.data?.message || 'An error occurred during signup.';
+      Alert.alert('Signup Failed', errorMessage);
+    } finally {
       
-      router.push('/(auth)/login');
+      setIsLoading(false);
     }
   };
 
@@ -36,7 +83,6 @@ export default function SignupScreen() {
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       
-      {/* Side Accents */}
       <View style={styles.leftAccent} />
       <View style={styles.rightAccent} />
 
@@ -52,7 +98,6 @@ export default function SignupScreen() {
           </View>
 
           <View style={styles.form}>
-            {/* TextInput wraps View props but handles its own styles */}
             <TextInput 
               placeholder="Full Name" 
               placeholderTextColor="#9CA3AF"
@@ -61,29 +106,44 @@ export default function SignupScreen() {
               value={fullName}
             />
             <TextInput 
-              placeholder="Roll Number" 
-              placeholderTextColor="#9CA3AF"
-              style={styles.input} 
-              onChangeText={setRollNumber}
-              value={rollNumber}
-            />
-            <TextInput 
-              placeholder=" Mobile Number" 
+              placeholder="Mobile Number" 
               placeholderTextColor="#9CA3AF"
               keyboardType="phone-pad"
               style={styles.input} 
-              onChangeText={setMobile}
-              value={Mobile}
+              onChangeText={setPhone}
+              value={phone}
+            />
+            <TextInput
+              placeholder='Email'
+              placeholderTextColor="#9CA3AF"
+              style={styles.input}
+              onChangeText={setEmail}
+              value={email}
+              autoCapitalize="none" // Important for emails
+            />
+            <TextInput 
+              placeholder="Enrollment Number" 
+              placeholderTextColor="#9CA3AF"
+              style={styles.input} 
+              onChangeText={setEnrollmentNumber}
+              value={EnrollmentNumber}
+            />
+            <TextInput 
+              placeholder="Password" 
+              placeholderTextColor="#9CA3AF"
+              style={styles.input} 
+              onChangeText={setPassword}
+              value={password}
+              secureTextEntry
             />
 
-            {/* Role Selector Box (View Only Styles) */}
+            {/* Role Selector */}
             <View style={styles.roleBox}>
               <Text style={styles.roleLabel}>Role</Text>
               <View style={styles.roleOptions}>
                 {roles.map((role, idx) => (
                   <View key={role} style={styles.roleItem}>
                     <TouchableOpacity onPress={() => setSelectedRole(role)}>
-                      {/* Text Only Styles */}
                       <Text style={[
                         styles.roleText, 
                         selectedRole === role && styles.roleTextActive
@@ -97,10 +157,12 @@ export default function SignupScreen() {
               </View>
             </View>
 
+            {/* Submit Button */}
             <TouchableOpacity 
               activeOpacity={0.8} 
-              style={styles.buttonShadow}
-              onPress={handleContinue} // ✅ UPDATED: Calls the new logic function
+              style={[styles.buttonShadow, { opacity: isLoading ? 0.7 : 1 }]}
+              onPress={handleSignup}
+              disabled={isLoading} // Disable button while loading
             >
               <LinearGradient
                 colors={['#FCD34D', '#F97316']}
@@ -108,7 +170,11 @@ export default function SignupScreen() {
                 end={{ x: 1, y: 0 }}
                 style={styles.gradientButton}
               >
-                <Text style={styles.buttonText}>Verify & Continue</Text>
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.buttonText}>Verify & Continue</Text>
+                )}
               </LinearGradient>
             </TouchableOpacity>
 
@@ -127,8 +193,6 @@ export default function SignupScreen() {
   );
 }
 
-
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -146,6 +210,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: 32,
+    paddingVertical: 40,
   },
   header: {
     alignItems: 'center',
@@ -175,9 +240,7 @@ const styles = StyleSheet.create({
     borderColor: '#F1F5F9',
     fontSize: 16,
     color: '#1F2937',
-    // Android Shadow
     elevation: 2,
-    // iOS Shadow
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -191,7 +254,6 @@ const styles = StyleSheet.create({
     borderColor: '#F1F5F9',
     flexDirection: 'row',
     alignItems: 'center',
-    // View styles only
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -202,7 +264,7 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     fontSize: 16,
     fontWeight: '500',
-    flex: 1, // Correctly allowed in Text and View
+    flex: 1,
   },
   roleOptions: {
     flexDirection: 'row',
@@ -261,4 +323,3 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
-

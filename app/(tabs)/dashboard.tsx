@@ -1,14 +1,37 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, Platform, StatusBar } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, StatusBar, Platform, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
-const MVP_FEATURES = [
-  { id: 'fee', title: 'Fee Status', icon: 'card', color: '#10B981', route: '/(tabs)/fees' },
-  { id: 'attn', title: 'Attendance', icon: 'calendar', color: '#3B82F6', route: '/(tabs)/attendance' },
-  { id: 'test', title: 'Test Results', icon: 'bar-chart', color: '#F59E0B', route: '/(tabs)/results' },
-  { id: 'doubt', title: 'Doubt Desk', icon: 'chatbubbles', color: '#8B5CF6', route: '/(tabs)/doubts' },
+const { width } = Dimensions.get('window');
+
+// Mock Data for Notices
+const NOTICES = [
+  { 
+    id: '1', 
+    title: 'Mid-Term Exam Schedule', 
+    desc: 'The datesheet for the upcoming exams has been released.', 
+    time: '2 hrs ago', 
+    type: 'ACADEMIC',
+    urgent: true 
+  },
+  { 
+    id: '2', 
+    title: 'Picnic Fee Submission', 
+    desc: 'Last date to submit the fee for the water park trip.', 
+    time: 'Yesterday', 
+    type: 'ADMIN',
+    urgent: false 
+  },
+  { 
+    id: '3', 
+    title: 'Physics Guest Lecture', 
+    desc: 'Dr. Verma will be visiting Campus B for a seminar.', 
+    time: '2 Oct', 
+    type: 'EVENT',
+    urgent: false 
+  },
 ];
 
 export default function Dashboard() {
@@ -16,9 +39,11 @@ export default function Dashboard() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Ensure status bar is dark for light background */}
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
       
+      {/* Decorative Background Element for "Premium" feel */}
+      <View style={styles.backgroundBlob} />
+
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
         {/* === Premium Header === */}
@@ -26,62 +51,95 @@ export default function Dashboard() {
           <View>
             <Text style={styles.greeting}>Good Evening,</Text>
             <Text style={styles.userName}>Aryan</Text>
+            {/* Added Context Info */}
+            <View style={styles.userTagContainer}>
+              <Text style={styles.userTag}>Class XII • Batch A</Text>
+            </View>
           </View>
+          
           <View style={styles.headerActions}>
             <TouchableOpacity style={styles.iconButton}>
               <Ionicons name="notifications-outline" size={24} color="#1E3A8A" />
-              {/* Notification Dot */}
               <View style={styles.notifDot} />
             </TouchableOpacity>
-            {/* Avatar Placeholder */}
-            <View style={styles.avatar}>
+            <TouchableOpacity
+            onPress={() => router.push("/(tabs)/profile")}
+            >
+              <View style={styles.avatar}>
               <Text style={styles.avatarText}>A</Text>
             </View>
+            </TouchableOpacity>
+            
           </View>
         </View>
 
-        {/* === Quick Stats Row (The "Hook") === */}
+        {/* === Quick Stats Row === */}
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
-            <Text style={styles.statLabel}>Avg. Attendance</Text>
+            <View style={styles.statHeader}>
+              <Ionicons name="calendar-outline" size={14} color="#64748B" />
+              <Text style={styles.statLabel}> Attendance</Text>
+            </View>
             <Text style={[styles.statValue, { color: '#3B82F6' }]}>92%</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statCard}>
-            <Text style={styles.statLabel}>Next Test In</Text>
+            <View style={styles.statHeader}>
+              <Ionicons name="time-outline" size={14} color="#64748B" />
+              <Text style={styles.statLabel}> Next Test</Text>
+            </View>
             <Text style={[styles.statValue, { color: '#F59E0B' }]}>4 Days</Text>
           </View>
         </View>
 
-
-        {/* === Attendance Alert === */}
+        {/* === Attendance Alert (Critical Info) === */}
         <TouchableOpacity style={styles.alertCard} activeOpacity={0.9}>
           <View style={styles.alertIconBox}>
-            <Ionicons name="alert" size={24} color="#FFF" />
+            <Ionicons name="warning" size={24} color="#FFF" />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.alertTitle}>Attendance Alert</Text>
-            <Text style={styles.alertText}>Marked ABSENT yesterday. Alert sent to parent.</Text>
+            <Text style={styles.alertTitle}>Attendance Warning</Text>
+            <Text style={styles.alertText}>You were marked ABSENT yesterday.</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color="#FECACA" />
         </TouchableOpacity>
 
+        {/* === NEW: Notices Section === */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Notice Board</Text>
+          <TouchableOpacity onPress={() => router.push('/notices')}>
+            <Text style={styles.seeAllText}>View All</Text>
+          </TouchableOpacity>
+        </View>
 
-        {/* === Feature Grid === */}
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-        <View style={styles.grid}>
-          {MVP_FEATURES.map((item) => (
+        <View style={styles.noticeList}>
+          {NOTICES.map((item) => (
             <TouchableOpacity 
               key={item.id} 
-              style={styles.gridItem}
-              onPress={() => item.route ? router.push(item.route) : null}
-              activeOpacity={0.8}
+              style={styles.noticeCard} 
+              activeOpacity={0.7}
+              onPress={() => {}} // Handle navigation
             >
-              {/* Used a lighter shade for the icon background */}
-              <View style={[styles.iconBox, { backgroundColor: item.color + '15' }]}>
-                <Ionicons name={item.icon as any} size={28} color={item.color} />
+              {/* Left Stripe based on urgency */}
+              <View style={[styles.noticeStripe, { backgroundColor: item.urgent ? '#EF4444' : '#3B82F6' }]} />
+              
+              <View style={styles.noticeContent}>
+                <View style={styles.noticeTopRow}>
+                  <View style={[styles.tagContainer, { backgroundColor: item.urgent ? '#FEF2F2' : '#EFF6FF' }]}>
+                    <Text style={[styles.tagText, { color: item.urgent ? '#DC2626' : '#2563EB' }]}>
+                      {item.type}
+                    </Text>
+                  </View>
+                  <Text style={styles.timeText}>{item.time}</Text>
+                </View>
+
+                <Text style={styles.noticeTitle} numberOfLines={1}>{item.title}</Text>
+                <Text style={styles.noticeDesc} numberOfLines={2}>{item.desc}</Text>
               </View>
-              <Text style={styles.gridLabel}>{item.title}</Text>
+
+              <View style={styles.arrowContainer}>
+                <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+              </View>
             </TouchableOpacity>
           ))}
         </View>
@@ -94,40 +152,65 @@ export default function Dashboard() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC', // Premium Slate-50 background
-    paddingTop: Platform.OS === 'android' ? 30 : 0,
+    backgroundColor: '#F8FAFC',
+  },
+  // Subtle decoration behind header
+  backgroundBlob: {
+    position: 'absolute',
+    top: -100,
+    right: -50,
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+    backgroundColor: '#DBEAFE', // Very light blue
+    opacity: 0.5,
   },
   scrollContent: {
     padding: 24,
     paddingBottom: 40,
   },
+  
+  // Header Styles
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 32,
+    alignItems: 'flex-start',
+    marginBottom: 28,
   },
   greeting: {
     fontSize: 16,
-    color: '#64748B', // Slate-500
+    color: '#64748B',
     fontWeight: '500',
   },
   userName: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '900',
-    color: '#1E3A8A', // Brand Blue
+    color: '#1E3A8A',
     letterSpacing: -0.5,
+    marginBottom: 4,
+  },
+  userTagContainer: {
+    backgroundColor: '#E0E7FF',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+  userTag: {
+    fontSize: 12,
+    color: '#3730A3',
+    fontWeight: '700',
   },
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    marginTop: 8,
   },
   iconButton: {
     backgroundColor: '#FFFFFF',
     padding: 10,
     borderRadius: 12,
-    // Subtle shadow for depth
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -136,13 +219,13 @@ const styles = StyleSheet.create({
   },
   notifDot: {
     position: 'absolute',
-    top: 8,
-    right: 8,
+    top: 10,
+    right: 10,
     width: 8,
     height: 8,
     borderRadius: 4,
     backgroundColor: '#EF4444',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#FFF',
   },
   avatar: {
@@ -161,13 +244,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+
+  // Stats Styles
   statsContainer: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 20,
-    marginBottom: 32,
-    // Premium shadow block
+    marginBottom: 24,
     elevation: 4,
     shadowColor: '#1E3A8A',
     shadowOffset: { width: 0, height: 4 },
@@ -178,32 +262,37 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
   },
+  statHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
   statDivider: {
     width: 1,
     backgroundColor: '#E2E8F0',
-    height: '80%',
+    height: '60%',
     alignSelf: 'center',
   },
   statLabel: {
     fontSize: 12,
     color: '#64748B',
     fontWeight: '600',
-    marginBottom: 4,
     textTransform: 'uppercase',
-    letterSpacing: 1,
   },
   statValue: {
     fontSize: 24,
     fontWeight: '900',
   },
+
+  // Alert Styles
   alertCard: {
-    backgroundColor: '#DC2626', // Slightly deeper red for premium feel
+    backgroundColor: '#DC2626',
     marginBottom: 32,
     padding: 16,
     borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 14,
     elevation: 4,
     shadowColor: '#DC2626',
     shadowOffset: { width: 0, height: 4 },
@@ -212,7 +301,7 @@ const styles = StyleSheet.create({
   },
   alertIconBox: {
     backgroundColor: 'rgba(255,255,255,0.2)',
-    padding: 8,
+    padding: 10,
     borderRadius: 12,
   },
   alertTitle: {
@@ -221,46 +310,87 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   alertText: {
-    color: '#FECACA', // Red-200
-    fontSize: 12,
+    color: '#FECACA',
+    fontSize: 13,
     marginTop: 2,
     fontWeight: '500',
+  },
+
+  // Notices Section Styles
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '800',
     color: '#1E3A8A',
-    marginBottom: 20,
   },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  seeAllText: {
+    color: '#3B82F6',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  noticeList: {
     gap: 16,
   },
-  gridItem: {
-    width: '47%', // Ensures 2 columns with gap
-    backgroundColor: '#FFFFFF',
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-    borderRadius: 24,
-    alignItems: 'center',
-    // Soft shadows for floating effect
-    elevation: 3,
-    shadowColor: '#000',
+  noticeCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    flexDirection: 'row',
+    overflow: 'hidden', // to clip the stripe
+    elevation: 2,
+    shadowColor: '#64748B',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
-    shadowRadius: 6,
+    shadowRadius: 4,
     borderWidth: 1,
     borderColor: '#F1F5F9',
   },
-  iconBox: {
-    padding: 16,
-    borderRadius: 20,
-    marginBottom: 16,
+  noticeStripe: {
+    width: 6,
+    height: '100%',
   },
-  gridLabel: {
+  noticeContent: {
+    flex: 1,
+    padding: 16,
+    paddingLeft: 12,
+  },
+  noticeTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  tagContainer: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  tagText: {
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  timeText: {
+    fontSize: 12,
+    color: '#94A3B8',
+    fontWeight: '500',
+  },
+  noticeTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#334155', // Slate-700
+    color: '#1E293B',
+    marginBottom: 4,
+  },
+  noticeDesc: {
+    fontSize: 13,
+    color: '#64748B',
+    lineHeight: 18,
+  },
+  arrowContainer: {
+    justifyContent: 'center',
+    paddingRight: 16,
   },
 });

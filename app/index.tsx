@@ -31,9 +31,9 @@ export default function Index() {
 
   if (userRole === 'admin') {
      // Assuming you'll build an admin folder later
-    return <Redirect href="/(admin)/index" />;
+    return <Redirect href="/(admin)/dashboard" />;
   }
 
   // Default: Student view (Tabs)
-  return <Redirect href="/(tabs)" />;
+  return <Redirect href="/(tabs)/dashboard" />;
 }

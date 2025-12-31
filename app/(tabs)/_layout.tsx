@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tabs } from 'expo-router';
+import { Stack, Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Platform } from 'react-native';
 
@@ -46,20 +46,40 @@ export default function TabLayout() {
         }}
       />
       {/* New Profile Tab for balance */}
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "person" : "person-outline"} size={24} color={color} />
-          ),
-        }}
-      />
-      {/* Hide other routes that might be in this folder but shouldn't be tabs */}
-      <Tabs.Screen name="fees" options={{ href: null }} />
-      <Tabs.Screen name="doubts" options={{ href: null }} />
-      <Tabs.Screen name="results" options={{ href: null }} />
-      <Tabs.Screen name="attendence" options={{ href: null }} />
+      
+
+      <Tabs.Screen name="fees" options={{
+        title: 'Fees',
+        tabBarIcon: ({ color, focused }) => (
+          <Ionicons name={focused ? "cash" : "cash-outline"} size={24} color={color} />
+        ),
+      }} />
+      <Tabs.Screen name="doubts" options={{
+        title: 'Doubts',
+        tabBarIcon: ({ color, focused }) => (
+          <Ionicons name={focused ? "help-circle" : "help-circle-outline"} size={24} color={color} />
+        ),
+      }} />
+      <Tabs.Screen name="results" options={{
+        title: 'Results',
+        tabBarIcon: ({ color, focused }) => (
+          <Ionicons name={focused ? "trophy" : "trophy-outline"} size={24} color={color} />
+        ),
+      }} />
+      <Tabs.Screen name="attendence" options={{
+        title: 'Attendance',
+         
+        tabBarIcon: ({ color, focused }) => (
+          <Ionicons name={focused ? "calendar" : "calendar-outline"} size={24} color={color} />
+        ),
+      }} />
+      <Tabs.Screen name="profile" options={{
+        title: 'Profile',
+        href: null,
+        tabBarIcon: ({ color, focused }) => (
+          <Ionicons name={focused ? "person" : "person-outline"} size={24} color={color} />
+        ),
+      }} />
     </Tabs>
   );
 }
