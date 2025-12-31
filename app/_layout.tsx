@@ -1,42 +1,45 @@
-import { Stack } from 'expo-router';
+import { Stack, Tabs } from 'expo-router';
 import { useEffect } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 
-// Keep the splash screen visible while we fetch resources
+
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   
   useEffect(() => {
-    // Hide splash screen after the app is mounted
-    // In a real app, you'd wait for fonts or auth checks here
+  
     SplashScreen.hideAsync();
   }, []);
+
+  const demoUser = {
+    role: "teacher",
+    name: "Aasim"
+
+  }
 
   return (
     <Stack
       screenOptions={{
-        // Global header styles for the CoachFlow brand
+        
         headerStyle: {
-          backgroundColor: '#F8FAFC', // Our slate-50 base
+          backgroundColor: '#F8FAFC', 
         },
-        headerShadowVisible: false, // Clean, flat look
+        headerShadowVisible: false, 
         headerTitleStyle: {
           fontWeight: 'bold',
-          color: '#1E3A8A', // Our Blue-900 brand color
+          color: '#1E3A8A', 
         },
-        // This ensures transitions feel "native" on both Android and iOS
+        
         animation: 'slide_from_right',
       }}
     >
-      {/* 1. Authentication Group: Hides headers for a full-screen experience */}
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-
-      {/* 2. Main App Group (Tabs): Hides stack header because tabs have their own */}
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-
-      {/* 3. The Redirect Index (Our base route pointer) */}
+       
+       <Tabs.Screen name="(auth)" options={{ headerShown: false }} />
+       <Tabs.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="(teachers)" options={{ headerShown: false }} />
+      <Stack.Screen name="(admin)" options={{ headerShown: false }} />
     </Stack>
   );
 }

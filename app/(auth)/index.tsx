@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   StyleSheet, Text, View, TextInput, TouchableOpacity, 
-   KeyboardAvoidingView, Platform, ScrollView 
+  KeyboardAvoidingView, Platform, ScrollView, Alert 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,8 +9,28 @@ import { Stack, useRouter } from 'expo-router';
 
 export default function SignupScreen() {
   const [selectedRole, setSelectedRole] = useState('Student');
+  const [fullName, setFullName] = useState('');
+  const [rollNumber, setRollNumber] = useState('');
+  const [Mobile, setMobile] = useState('');
+  
   const router = useRouter();
-  const roles = ['Student', 'Parent', 'Teacher'];
+  const roles = ['Student', 'admin', 'Teacher'];
+
+
+  const handleContinue = () => {
+    if (!fullName || !Mobile) {
+      Alert.alert('Error', 'Please fill in all required fields.');
+      return;
+    }
+
+    if (selectedRole === 'Teacher') {
+      
+      router.push('/(teachers)/attendence'); 
+    } else {
+      
+      router.push('/(auth)/login');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -37,12 +57,23 @@ export default function SignupScreen() {
               placeholder="Full Name" 
               placeholderTextColor="#9CA3AF"
               style={styles.input} 
+              onChangeText={setFullName}
+              value={fullName}
             />
             <TextInput 
-              placeholder="Mobile Number" 
+              placeholder="Roll Number" 
+              placeholderTextColor="#9CA3AF"
+              style={styles.input} 
+              onChangeText={setRollNumber}
+              value={rollNumber}
+            />
+            <TextInput 
+              placeholder=" Mobile Number" 
               placeholderTextColor="#9CA3AF"
               keyboardType="phone-pad"
               style={styles.input} 
+              onChangeText={setMobile}
+              value={Mobile}
             />
 
             {/* Role Selector Box (View Only Styles) */}
@@ -69,8 +100,7 @@ export default function SignupScreen() {
             <TouchableOpacity 
               activeOpacity={0.8} 
               style={styles.buttonShadow}
-              onPress={() => router.push('/(auth)/login')}
-              
+              onPress={handleContinue} // ✅ UPDATED: Calls the new logic function
             >
               <LinearGradient
                 colors={['#FCD34D', '#F97316']}
@@ -97,7 +127,8 @@ export default function SignupScreen() {
   );
 }
 
-// Separating ViewStyle and TextStyle to satisfy TypeScript
+
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
