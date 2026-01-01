@@ -22,7 +22,8 @@ export default function SignupScreen() {
   // Loading State
   const [isLoading, setIsLoading] = useState(false);
   
-  const roles = ['Student', 'admin', 'Teacher'];
+  // UI Display Names (Capitalized)
+  const roles = ['Student', 'Teacher', 'Admin'];
 
   const handleSignup = async () => {
     // 1. Validation
@@ -34,9 +35,11 @@ export default function SignupScreen() {
     // 2. Start Loading
     setIsLoading(true);
 
-    // Debug Log (Check your terminal)
+    // 3. FIX: Convert Role to Lowercase for Backend (Teacher -> teacher)
+    const roleToSend = selectedRole.toLowerCase();
+
     console.log("Sending Data:", { 
-      fullName, EnrollmentNumber, password, phone, email, role: selectedRole 
+      fullName, EnrollmentNumber, password, phone, email, role: roleToSend 
     });
 
     try {
@@ -46,23 +49,16 @@ export default function SignupScreen() {
         password,
         phone,
         email,
-        role: selectedRole,
+        selectedRole: roleToSend, // <--- SEND LOWERCASE ROLE HERE
       });
 
-      // 3. Success Logic (Only runs if axios is successful)
       if (response.status === 201 || response.status === 200) {
         Alert.alert("Success", "Account created successfully!", [
           {
             text: "OK", 
             onPress: () => {
-              // Redirect based on role
-              if (selectedRole === 'Teacher') {
-                router.push('/(teachers)/attendance'); 
-              } else if (selectedRole === 'admin') {
-                router.push('/(admin)/dashboard'); 
-              } else {
-                router.push('/(auth)/login');
-              }
+              router.push('/(auth)/login');
+              
             }
           }
         ]);
@@ -70,11 +66,9 @@ export default function SignupScreen() {
 
     } catch (error: any) {
       console.error('Signup Error:', error);
-      
       const errorMessage = error.response?.data?.message || 'An error occurred during signup.';
       Alert.alert('Signup Failed', errorMessage);
     } finally {
-      
       setIsLoading(false);
     }
   };
@@ -119,7 +113,7 @@ export default function SignupScreen() {
               style={styles.input}
               onChangeText={setEmail}
               value={email}
-              autoCapitalize="none" // Important for emails
+              autoCapitalize="none"
             />
             <TextInput 
               placeholder="Enrollment Number" 
@@ -151,7 +145,8 @@ export default function SignupScreen() {
                         {role}
                       </Text>
                     </TouchableOpacity>
-                    {idx < 2 && <Text style={styles.separator}>|</Text>}
+                    {/* Add separator only between items */}
+                    {idx < roles.length - 1 && <Text style={styles.separator}>|</Text>}
                   </View>
                 ))}
               </View>
@@ -162,7 +157,7 @@ export default function SignupScreen() {
               activeOpacity={0.8} 
               style={[styles.buttonShadow, { opacity: isLoading ? 0.7 : 1 }]}
               onPress={handleSignup}
-              disabled={isLoading} // Disable button while loading
+              disabled={isLoading}
             >
               <LinearGradient
                 colors={['#FCD34D', '#F97316']}
@@ -192,7 +187,6 @@ export default function SignupScreen() {
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

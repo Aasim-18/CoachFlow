@@ -11,19 +11,21 @@ import axios from 'axios';
 export default function OTPScreen() {
   const router = useRouter();
   
-  // 1. Get Email passed from Login Screen
-  const { email } = useLocalSearchParams(); 
+  // 1. Get Params safely
+  const params = useLocalSearchParams();
+  const email = params.email as string;
+  const selectedRole = params.selectedRole as string; 
 
   const [otp, setOtp] = useState(['', '', '', '']);
   const [isLoading, setIsLoading] = useState(false);
-  const [timer, setTimer] = useState(30); // 30s countdown
+  const [timer, setTimer] = useState(30);
   
-  // Refs to manage focus between inputs
-  const inputs = useRef([]);
+  // Ref to manage focus between inputs
+  const inputs = useRef<Array<TextInput | null>>([]);
 
   // Timer Logic
   useEffect(() => {
-    let interval;
+    let interval: NodeJS.Timeout;
     if (timer > 0) {
       interval = setInterval(() => {
         setTimer((prev) => prev - 1);
@@ -32,28 +34,32 @@ export default function OTPScreen() {
     return () => clearInterval(interval);
   }, [timer]);
 
-  // Handle Input Change (Forward Focus)
-  const handleOtpChange = (value, index) => {
+  // Handle Input Change
+  const handleOtpChange = (value: string, index: number) => {
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
 
-    // Move to next input if value is entered
+    // Auto-focus next input
     if (value && index < 3) {
       inputs.current[index + 1]?.focus();
     }
+    // Auto-focus previous input if deleted
+    if (!value && index > 0) {
+      inputs.current[index - 1]?.focus();
+    }
   };
 
-  // Handle Backspace (Backward Focus)
-  const handleKeyPress = (e, index) => {
+  // Handle Backspace
+  const handleKeyPress = (e: any, index: number) => {
     if (e.nativeEvent.key === 'Backspace' && !otp[index] && index > 0) {
       inputs.current[index - 1]?.focus();
     }
   };
 
-  // 2. Verify OTP API Call
+  // 2. Verify Logic
   const handleVerify = async () => {
-    const enteredOtp = otp.join('');
+    const enteredOtp = otp.join(''); 
     
     if (enteredOtp.length !== 4) {
       Alert.alert("Invalid OTP", "Please enter the full 4-digit code.");
@@ -67,12 +73,28 @@ export default function OTPScreen() {
       
       const response = await axios.post('https://vlx-server.onrender.com/api/v1/users/verify', {
         email: email,
-        otp: enteredOtp
+        otp: enteredOtp 
       });
 
       if (response.status === 200) {
+        // ✅ Success! User data is already in Storage (from Login Screen).
+        // Just navigate now.
+
         Alert.alert("Verified!", "Welcome back.", [
-          { text: "Continue", onPress: () => router.replace('/(tabs)/dashboard') }
+          { 
+            text: "Continue", 
+            onPress: () => {
+              const role = selectedRole?.toLowerCase();
+              
+              if (role === 'teacher') {
+                router.replace('/(teachers)/attendance'); 
+              } else if (role === 'admin') {
+                router.replace('/(admin)/dashboard'); 
+              } else {
+                router.replace('/(tabs)/dashboard');
+              }
+            } 
+          }
         ]);
       }
     } catch (error: any) {
@@ -84,13 +106,13 @@ export default function OTPScreen() {
     }
   };
 
-  // 3. Resend OTP Logic
+  // 3. Resend Logic
   const handleResend = async () => {
     if (timer > 0) return;
 
     try {
-      await axios.post('https://vlx-server.onrender.com/api/v1/users/generate-otp', { email });
-      setTimer(30); // Reset timer
+      await axios.post('https://vlx-server.onrender.com/api/v1/users/generateotp', { email });
+      setTimer(30);
       Alert.alert("Sent", "A new code has been sent to your email.");
     } catch (error) {
       Alert.alert("Error", "Failed to resend OTP.");
@@ -109,15 +131,14 @@ export default function OTPScreen() {
         style={styles.flexOne}
       >
         <View style={styles.content}>
-          {/* Header */}
+          
           <View style={styles.header}>
             <Text style={styles.logoText}>Verification</Text>
             <Text style={styles.subText}>
-              Enter the code sent to {email ? email : "your email"}
+              Enter the code sent to {email || "your email"}
             </Text>
           </View>
 
-          {/* OTP Inputs */}
           <View style={styles.otpRow}>
             {otp.map((digit, index) => (
               <TextInput
@@ -125,19 +146,19 @@ export default function OTPScreen() {
                 ref={(ref) => (inputs.current[index] = ref)}
                 style={[
                   styles.otpInput, 
-                  digit ? styles.otpInputFilled : null // Highlight if filled
+                  digit ? styles.otpInputFilled : null
                 ]}
                 maxLength={1}
                 keyboardType="number-pad"
                 value={digit}
                 onChangeText={(value) => handleOtpChange(value, index)}
                 onKeyPress={(e) => handleKeyPress(e, index)}
-                autoFocus={index === 0} // Focus first input on load
+                autoFocus={index === 0}
+                selectTextOnFocus
               />
             ))}
           </View>
 
-          {/* Verify Button */}
           <TouchableOpacity 
             activeOpacity={0.8} 
             style={[styles.buttonShadow, { opacity: isLoading ? 0.7 : 1 }]}
@@ -158,7 +179,6 @@ export default function OTPScreen() {
             </LinearGradient>
           </TouchableOpacity>
 
-          {/* Resend Section */}
           <View style={styles.footer}>
             <Text style={styles.footerText}>Didn't receive code? </Text>
             <TouchableOpacity onPress={handleResend} disabled={timer > 0}>
@@ -233,8 +253,8 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   otpInputFilled: {
-    borderColor: '#F97316', // Orange border when filled
-    backgroundColor: '#FFF7ED', // Light orange bg
+    borderColor: '#F97316', 
+    backgroundColor: '#FFF7ED', 
   },
   buttonShadow: {
     marginTop: 16,
@@ -271,6 +291,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   disabledLink: {
-    color: '#94A3B8', // Grey out text if timer running
+    color: '#94A3B8',
   }
 });

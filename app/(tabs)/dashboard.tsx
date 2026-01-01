@@ -1,59 +1,76 @@
-import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, StatusBar, Platform, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, StatusBar, Dimensions, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+// 1. Import AsyncStorage
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 
 const { width } = Dimensions.get('window');
 
-// Mock Data for Notices
+// Mock Data (Kept same for now)
 const NOTICES = [
-  { 
-    id: '1', 
-    title: 'Mid-Term Exam Schedule', 
-    desc: 'The datesheet for the upcoming exams has been released.', 
-    time: '2 hrs ago', 
-    type: 'ACADEMIC',
-    urgent: true 
-  },
-  { 
-    id: '2', 
-    title: 'Picnic Fee Submission', 
-    desc: 'Last date to submit the fee for the water park trip.', 
-    time: 'Yesterday', 
-    type: 'ADMIN',
-    urgent: false 
-  },
-  { 
-    id: '3', 
-    title: 'Physics Guest Lecture', 
-    desc: 'Dr. Verma will be visiting Campus B for a seminar.', 
-    time: '2 Oct', 
-    type: 'EVENT',
-    urgent: false 
-  },
+  { id: '1', title: 'Mid-Term Exam Schedule', desc: 'The datesheet for the upcoming exams has been released.', time: '2 hrs ago', type: 'ACADEMIC', urgent: true },
+  { id: '2', title: 'Picnic Fee Submission', desc: 'Last date to submit the fee for the water park trip.', time: 'Yesterday', type: 'ADMIN', urgent: false },
+  { id: '3', title: 'Physics Guest Lecture', desc: 'Dr. Verma will be visiting Campus B for a seminar.', time: '2 Oct', type: 'EVENT', urgent: false },
 ];
 
 export default function Dashboard() {
   const router = useRouter();
+  
+  // 2. State to hold user data
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  // 3. Fetch User Data on Load
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const storedUser = await AsyncStorage.getItem('user');
+        if (storedUser) {
+          setUser(JSON.parse(storedUser)); // Convert String back to Object
+        }
+      } catch (error) {
+        console.error("Failed to load user info", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadUser();
+  }, []);
+
+  // 4. Loading State (Optional but good UX)
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#3B82F6" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
-      
-      {/* Decorative Background Element for "Premium" feel */}
       <View style={styles.backgroundBlob} />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         
-        {/* === Premium Header === */}
+        {/* === Header Row === */}
         <View style={styles.headerRow}>
           <View>
             <Text style={styles.greeting}>Good Evening,</Text>
-            <Text style={styles.userName}>Aryan</Text>
-            {/* Added Context Info */}
+            
+            {/* 5. Dynamic Name */}
+            <Text style={styles.userName}>
+              {user?.fullName || "Student"} 
+            </Text>
+            
+            {/* 6. Dynamic Details (Roll No / Email) */}
             <View style={styles.userTagContainer}>
-              <Text style={styles.userTag}>Class XII • Batch A</Text>
+              <Text style={styles.userTag}>
+                {/* Fallback to 'Student' if data is missing */}
+                {user?.EnrollmentNumber ? `Roll: ${user.EnrollmentNumber}` : 'Class XII • Batch A'}
+              </Text>
             </View>
           </View>
           
@@ -62,18 +79,20 @@ export default function Dashboard() {
               <Ionicons name="notifications-outline" size={24} color="#1E3A8A" />
               <View style={styles.notifDot} />
             </TouchableOpacity>
-            <TouchableOpacity
-            onPress={() => router.push("/(tabs)/profile")}
-            >
+
+            <TouchableOpacity onPress={() => router.push("/(tabs)/profile")}>
               <View style={styles.avatar}>
-              <Text style={styles.avatarText}>A</Text>
-            </View>
+                {/* 7. Dynamic Initials */}
+                <Text style={styles.avatarText}>
+                  {user?.fullName ? user.fullName.charAt(0).toUpperCase() : "S"}
+                </Text>
+              </View>
             </TouchableOpacity>
-            
           </View>
         </View>
 
-        {/* === Quick Stats Row === */}
+        {/* ... (Rest of your component remains exactly the same: Stats, Alerts, Notices) ... */}
+        
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
             <View style={styles.statHeader}>
@@ -92,7 +111,6 @@ export default function Dashboard() {
           </View>
         </View>
 
-        {/* === Attendance Alert (Critical Info) === */}
         <TouchableOpacity style={styles.alertCard} activeOpacity={0.9}>
           <View style={styles.alertIconBox}>
             <Ionicons name="warning" size={24} color="#FFF" />
@@ -104,39 +122,27 @@ export default function Dashboard() {
           <Ionicons name="chevron-forward" size={20} color="#FECACA" />
         </TouchableOpacity>
 
-        {/* === NEW: Notices Section === */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Notice Board</Text>
-          <TouchableOpacity onPress={() => router.push('/notices')}>
+          <TouchableOpacity onPress={() => router.push('/')}>
             <Text style={styles.seeAllText}>View All</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.noticeList}>
           {NOTICES.map((item) => (
-            <TouchableOpacity 
-              key={item.id} 
-              style={styles.noticeCard} 
-              activeOpacity={0.7}
-              onPress={() => {}} // Handle navigation
-            >
-              {/* Left Stripe based on urgency */}
+            <TouchableOpacity key={item.id} style={styles.noticeCard} activeOpacity={0.7}>
               <View style={[styles.noticeStripe, { backgroundColor: item.urgent ? '#EF4444' : '#3B82F6' }]} />
-              
               <View style={styles.noticeContent}>
                 <View style={styles.noticeTopRow}>
                   <View style={[styles.tagContainer, { backgroundColor: item.urgent ? '#FEF2F2' : '#EFF6FF' }]}>
-                    <Text style={[styles.tagText, { color: item.urgent ? '#DC2626' : '#2563EB' }]}>
-                      {item.type}
-                    </Text>
+                    <Text style={[styles.tagText, { color: item.urgent ? '#DC2626' : '#2563EB' }]}>{item.type}</Text>
                   </View>
                   <Text style={styles.timeText}>{item.time}</Text>
                 </View>
-
                 <Text style={styles.noticeTitle} numberOfLines={1}>{item.title}</Text>
                 <Text style={styles.noticeDesc} numberOfLines={2}>{item.desc}</Text>
               </View>
-
               <View style={styles.arrowContainer}>
                 <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
               </View>
@@ -148,6 +154,7 @@ export default function Dashboard() {
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

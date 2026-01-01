@@ -7,6 +7,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import axios from 'axios';
+// ✅ 1. IMPORT ASYNC STORAGE
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -35,23 +37,52 @@ export default function LoginScreen() {
       });
 
       if (loginResponse.status === 200) {
+        
+        // 1. 🔍 DEBUG LOG: See exactly what the server sent
+        console.log("Server Response:", JSON.stringify(loginResponse.data, null, 2));
+
+        // 2. 🛡️ SAFE EXTRACTION:
+        // Based on your previous logs, the user is inside 'message.user'
+        const responseData = loginResponse.data?.message?.user; 
+        const userObj = responseData || loginResponse.data?.user;
+
+        if (!userObj || !userObj.selectedRole) {
+           console.error("❌ CRITICAL: Could not find 'selectedRole' or User Object.");
+           Alert.alert("Login Error", "Server returned invalid user data.");
+           setIsLoading(false);
+           return;
+        }
+
+        // ✅ 3. SAVE DATA TO ASYNC STORAGE HERE (The Fix)
+        try {
+          await AsyncStorage.setItem('user', JSON.stringify(userObj));
+          console.log("✅ User Data Saved Successfully:", userObj.fullName);
+        } catch (storageError) {
+          console.error("Failed to save user to storage:", storageError);
+        }
+
+        const userRole = userObj.selectedRole;
+        console.log("✅ Role Detected:", userRole)
+
         // --- STEP 2: GENERATE OTP ---
         console.log("2. Credentials Valid. Requesting OTP for:", email);
         
-        // Passing 'email' explicitly as requested
         const otpResponse = await axios.post('https://vlx-server.onrender.com/api/v1/users/generateotp', {
-          email: email  // <--- EMAIL PASSED HERE
+          email: email
         });
 
         if (otpResponse.status === 200) {
-          Alert.alert("Success", "OTP sent to your registered email/phone.", [
+          Alert.alert("Success", "OTP sent to your registered email.", [
             {
               text: "Enter OTP",
               onPress: () => {
-                // Navigate to OTP screen and pass email so the OTP screen knows who to verify
+                // ✅ PASS ROLE TO OTP PAGE
                 router.push({
                   pathname: '/otp',
-                  params: { email: email } 
+                  params: { 
+                    email: email, 
+                    selectedRole: userRole 
+                  } 
                 });
               }
             }
@@ -64,10 +95,8 @@ export default function LoginScreen() {
       
       let errorMessage = "Something went wrong.";
       if (error.response) {
-        // Server responded with error (e.g., 401 Unauthorized, 404 User Not Found)
         errorMessage = error.response.data.message || "Invalid Credentials";
       } else if (error.request) {
-        // Server unreachable
         errorMessage = "Network Error. Please check your internet.";
       }
       

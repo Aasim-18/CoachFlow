@@ -1,10 +1,56 @@
-import React from 'react';
-import { StyleSheet, Text, View, SafeAreaView, ScrollView, TouchableOpacity, Switch } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { 
+  StyleSheet, Text, View, SafeAreaView, ScrollView, 
+  TouchableOpacity, Switch, ActivityIndicator 
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function ProfileScreen() {
   const router = useRouter();
+  
+  // State for User Data
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch User from Storage
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const storedUser = await AsyncStorage.getItem('user');
+        
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          console.log("✅ Profile Loaded:", parsedUser.fullName);
+          setUser(parsedUser);
+        }
+      } catch (error) {
+        console.error("Failed to load profile", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadUser();
+  }, []);
+
+  // Handle Logout (Clear Data)
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.clear(); // Wipe data
+      router.replace('/(auth)/login'); // Redirect to Login
+    } catch (e) {
+      console.error("Logout failed", e);
+    }
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#1E3A8A" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -15,13 +61,21 @@ export default function ProfileScreen() {
         {/* === Profile Header Card === */}
         <View style={styles.profileCard}>
           <View style={styles.avatarLarge}>
-            <Text style={styles.avatarTextLarge}>A</Text>
+            {/* Dynamic Initials */}
+            <Text style={styles.avatarTextLarge}>
+              {user?.fullName ? user.fullName.charAt(0).toUpperCase() : "U"}
+            </Text>
             <TouchableOpacity style={styles.editBadge}>
               <Ionicons name="camera" size={16} color="#FFF" />
             </TouchableOpacity>
           </View>
-          <Text style={styles.userName}>Aryan</Text>
-          <Text style={styles.userId}>ID: CF-2025-0982</Text>
+          
+          {/* Dynamic Name */}
+          <Text style={styles.userName}>{user?.fullName || "Student Name"}</Text>
+          
+          {/* Dynamic Enrollment Number */}
+          <Text style={styles.userId}>ID: {user?.EnrollmentNumber || "N/A"}</Text>
+          
           <View style={styles.batchBadge}>
             <Text style={styles.batchText}>Batch: IIT-JEE Morning</Text>
           </View>
@@ -30,19 +84,28 @@ export default function ProfileScreen() {
         {/* === Account Settings Section === */}
         <Text style={styles.sectionTitle}>Account Information</Text>
         <View style={styles.listContainer}>
+          
+          {/* 1. Mobile Number */}
           <View style={styles.listItem}>
             <Ionicons name="call-outline" size={22} color="#1E3A8A" />
             <View style={styles.listItemContent}>
               <Text style={styles.listLabel}>Mobile Number</Text>
-              <Text style={styles.listValue}>+91 98765 43210</Text>
+              <Text style={styles.listValue}>
+                {user?.phone ? `+91 ${user.phone}` : "Not Provided"}
+              </Text>
             </View>
           </View>
+          
           <View style={styles.divider} />
+          
+          {/* 2. Email Address */}
           <View style={styles.listItem}>
-            <Ionicons name="people-outline" size={22} color="#1E3A8A" />
+            <Ionicons name="mail-outline" size={22} color="#1E3A8A" />
             <View style={styles.listItemContent}>
-              <Text style={styles.listLabel}>Parent Name</Text>
-              <Text style={styles.listValue}>Mr. Rajesh Kumar</Text>
+              <Text style={styles.listLabel}>Email Address</Text>
+              <Text style={styles.listValue}>
+                {user?.email || "No Email"}
+              </Text>
             </View>
           </View>
         </View>
@@ -80,7 +143,7 @@ export default function ProfileScreen() {
         {/* === Logout Button === */}
         <TouchableOpacity 
           style={styles.logoutButton}
-          onPress={() => router.replace('/')}
+          onPress={handleLogout} 
         >
           <Text style={styles.logoutText}>Logout from CoachFlow</Text>
         </TouchableOpacity>
